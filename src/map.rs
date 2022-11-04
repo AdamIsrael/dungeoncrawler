@@ -33,49 +33,6 @@ impl Map {
         point.x >= 0 && point.x < SCREEN_WIDTH && point.y >= 0 && point.y < SCREEN_HEIGHT
     }
 
-    pub fn render(&self, ctx: &mut BTerm, camera: &Camera) {
-        ctx.set_active_console(0);
-        for y in camera.top_y..camera.bottom_y {
-            for x in camera.left_x..camera.right_x {
-                if self.in_bounds(Point::new(x, y)) {
-                    let idx = map_idx(x, y);
-                    match self.tiles[idx] {
-                        TileType::Floor => {
-                            ctx.set(
-                                x - camera.left_x,
-                                y - camera.top_y,
-                                WHITE,
-                                BLACK,
-                                to_cp437('.'),
-                            );
-                        }
-                        TileType::Wall => {
-                            ctx.set(
-                                x - camera.left_x,
-                                y - camera.top_y,
-                                WHITE,
-                                BLACK,
-                                to_cp437('#'),
-                            );
-                        }
-                    }
-                }
-            }
-        }
-        // for y in 0..SCREEN_HEIGHT {
-        //     for x in 0..SCREEN_WIDTH {
-        //         let idx = map_idx(x, y);
-        //         match self.tiles[idx] {
-        //             TileType::Floor => {
-        //                 ctx.set(x, y, YELLOW, BLACK, to_cp437('.'));
-        //             }
-        //             TileType::Wall => {
-        //                 ctx.set(x, y, GREEN, BLACK, to_cp437('#'));
-        //             }
-        //         }
-        //     }
-        // }
-    }
 
     /// Check that the tile index is valid
     pub fn try_idx(&self, point: Point) -> Option<usize> {
