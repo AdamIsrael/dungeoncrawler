@@ -2,8 +2,7 @@ use crate::prelude::*;
 
 pub fn spawn_player(ecs : &mut World, pos : Point) {
     ecs.push(
-        (
-            Player,
+        (Player,
             pos,
             Render{
                 color: ColorPair::new(WHITE, BLACK),
@@ -14,14 +13,14 @@ pub fn spawn_player(ecs : &mut World, pos : Point) {
 }
 
 pub fn spawn_monster(
-    ecs: &mut World,
-    rng: &mut RandomNumberGenerator,
+    ecs: &mut World, 
+    rng: &mut RandomNumberGenerator, 
     pos : Point
-){
+) {
     ecs.push(
         (Enemy,
             pos,
-            Render {
+            Render{
                 color: ColorPair::new(WHITE, BLACK),
                 glyph : match rng.range(0,4) {
                     0 => to_cp437('E'),

@@ -1,20 +1,19 @@
 use crate::prelude::*;
-const NUM_ROOMS: usize = 20;
 
-/// The MapBuilder holds the map, a list of rooms, and the players starting position.
+const NUM_ROOMS: usize = 20;
 pub struct MapBuilder {
-    pub map: Map,
-    pub rooms: Vec<Rect>,
-    pub player_start: Point,
+    pub map : Map,
+    pub rooms : Vec<Rect>,
+    pub player_start : Point
 }
 
 impl MapBuilder {
     pub fn new(rng: &mut RandomNumberGenerator) -> Self {
+
         let mut mb = MapBuilder{
             map : Map::new(),
-            rooms : Vec::new(), 
-            // Start the player in the center of the first room
-            player_start : Point::zero(),
+            rooms : Vec::new(),
+            player_start : Point::zero()
         };
         mb.fill(TileType::Wall);
         mb.build_random_rooms(rng);
@@ -23,7 +22,37 @@ impl MapBuilder {
         mb
     }
 
-    /// Carve a horizontal tunnel between two points on the map
+    fn fill(&mut self, tile : TileType) {
+        self.map.tiles.iter_mut().for_each(|t| *t = tile);
+    }
+
+    fn build_random_rooms(&mut self, rng : &mut RandomNumberGenerator) {
+        while self.rooms.len() < NUM_ROOMS {
+            let room = Rect::with_size(
+                rng.range(1, SCREEN_WIDTH - 10),
+                rng.range(1, SCREEN_HEIGHT - 10),
+                rng.range(2, 10),
+                rng.range(2, 10),
+            );
+            let mut overlap = false;
+            for r in self.rooms.iter() {
+                if r.intersect(&room) {
+                    overlap = true;
+                }
+            }
+            if !overlap {
+                room.for_each(|p| {
+                    if p.x > 0 && p.x < SCREEN_WIDTH && p.y > 0 && p.y < SCREEN_HEIGHT {
+                        let idx = map_idx(p.x, p.y);
+                        self.map.tiles[idx] = TileType::Floor;
+                    }
+                });
+
+                self.rooms.push(room)
+            }
+        }
+    }
+
     fn apply_horizontal_tunnel(&mut self, x1:i32, x2:i32, y:i32) {
         use std::cmp::{min, max};
         for x in min(x1,x2) ..= max(x1,x2) {
@@ -33,7 +62,6 @@ impl MapBuilder {
         }
     }
 
-    /// Carve a vertical tunnel between two points on the map
     fn apply_vertical_tunnel(&mut self, y1:i32, y2:i32, x:i32) {
         use std::cmp::{min, max};
         for y in min(y1,y2) ..= max(y1,y2) {
@@ -43,11 +71,8 @@ impl MapBuilder {
         }
     }
 
-    /// Build corridors between rooms
     fn build_corridors(&mut self, rng: &mut RandomNumberGenerator) {
         let mut rooms = self.rooms.clone();
-        // sort the rooms by their center will make it more likely that corridors
-        // will connect adjacent rooms and not snake all over the map.
         rooms.sort_by(|a,b| a.center().x.cmp(&b.center().x));
 
         for (i, room) in rooms.iter().enumerate().skip(1) {
@@ -63,40 +88,4 @@ impl MapBuilder {
             }
         }
     }
-
-    /// Generate a random number of rooms
-    fn build_random_rooms(&mut self, rng : &mut RandomNumberGenerator) {
-        while self.rooms.len() < NUM_ROOMS {
-            let room = Rect::with_size(
-                rng.range(1, SCREEN_WIDTH - 10),
-                rng.range(1, SCREEN_HEIGHT - 10),
-                rng.range(2, 10),
-                rng.range(2, 10),
-            );
-
-            let mut overlap = false;
-            for r in self.rooms.iter() {
-                if r.intersect(&room) {
-                    overlap = true;
-                }
-            }
-
-            if !overlap {
-                room.for_each(|p| {
-                    if p.x > 0 && p.x < SCREEN_WIDTH && p.y > 0
-                        && p.y < SCREEN_HEIGHT
-                    {
-                        let idx = map_idx(p.x, p.y);
-                        self.map.tiles[idx] = TileType::Floor;
-                    }
-                });
-                self.rooms.push(room)
-            }
-        }
-    }
-
-    fn fill(&mut self, tile: TileType) {
-        self.map.tiles.iter_mut().for_each(|t| *t = tile);
-    }
-
 }
