@@ -3,8 +3,13 @@ use crate::prelude::*;
 #[system]
 #[read_component(Point)]
 #[read_component(MovingRandomly)]
+#[read_component(Health)]
+#[read_component(Player)]
 pub fn random_move(ecs: &SubWorld, commands: &mut CommandBuffer) {
     let mut movers = <(Entity, &Point, &MovingRandomly)>::query();
+    let mut positions = <(Entity, &Point, &Health)>::query();
+
+    
     movers.iter(ecs).for_each(|(entity, pos, _)| {
         let mut rng = RandomNumberGenerator::new();
         // randomly move in one of four directions
