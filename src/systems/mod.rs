@@ -1,15 +1,14 @@
 use crate::prelude::*;
 
-mod end_turn;
-mod entity_render;
 mod map_render;
+mod entity_render;
 mod player_input;
 mod random_move;
+mod end_turn;
 mod movement;
 mod hud;
 mod tooltips;
 mod combat;
-
 
 pub fn build_input_scheduler() -> Schedule {
     Schedule::builder()
