@@ -41,21 +41,19 @@ impl State {
         let mut ecs = World::default();
         let mut resources = Resources::default();
         let mut rng = RandomNumberGenerator::new();
-        let map_builder = MapBuilder::new(&mut rng);
-
+        let mut map_builder = MapBuilder::new(&mut rng);
         spawn_player(&mut ecs, map_builder.player_start);
-        spawn_amulet_of_yala(&mut ecs, map_builder.amulet_start);
-
+        //spawn_amulet_of_yala(&mut ecs, map_builder.amulet_start);
+        let exit_idx = map_builder.map.point2d_to_index(map_builder.amulet_start);
+        map_builder.map.tiles[exit_idx] = TileType::Exit;
         map_builder
             .monster_spawns
             .iter()
-            .for_each(|pos| spawn_monster(&mut ecs, &mut rng, *pos));
-
+            .for_each(|pos| spawn_entity(&mut ecs, &mut rng, *pos));
         resources.insert(map_builder.map);
         resources.insert(Camera::new(map_builder.player_start));
         resources.insert(TurnState::AwaitingInput);
         resources.insert(map_builder.theme);
-        
         Self {
             ecs,
             resources,
@@ -63,6 +61,83 @@ impl State {
             player_systems: build_player_scheduler(),
             monster_systems: build_monster_scheduler(),
         }
+    }
+
+    fn reset_game_state(&mut self) {
+        self.ecs = World::default();
+        self.resources = Resources::default();
+        let mut rng = RandomNumberGenerator::new();
+        let mut map_builder = MapBuilder::new(&mut rng);
+        spawn_player(&mut self.ecs, map_builder.player_start);
+        //spawn_amulet_of_yala(&mut self.ecs, map_builder.amulet_start);
+        let exit_idx = map_builder.map.point2d_to_index(map_builder.amulet_start);
+        map_builder.map.tiles[exit_idx] = TileType::Exit;
+        map_builder
+            .monster_spawns
+            .iter()
+            .for_each(|pos| spawn_entity(&mut self.ecs, &mut rng, *pos));
+        self.resources.insert(map_builder.map);
+        self.resources.insert(Camera::new(map_builder.player_start));
+        self.resources.insert(TurnState::AwaitingInput);
+        self.resources.insert(map_builder.theme);
+    }
+
+    fn advance_level(&mut self) {
+        let player_entity = *<Entity>::query()
+            .filter(component::<Player>())
+            .iter(&mut self.ecs)
+            .nth(0)
+            .unwrap();
+
+        use std::collections::HashSet;
+        let mut entities_to_keep = HashSet::new();
+        entities_to_keep.insert(player_entity);
+        <(Entity, &Carried)>::query()
+            .iter(&self.ecs)
+            .filter(|(_e, carry)| carry.0 == player_entity)
+            .map(|(e, _carry)| *e)
+            .for_each(|e| {
+                entities_to_keep.insert(e);
+            });
+        let mut cb = CommandBuffer::new(&mut self.ecs); // (1)
+        for e in Entity::query().iter(&self.ecs) {
+            // (2)
+            if !entities_to_keep.contains(e) {
+                // (3)
+                cb.remove(*e);
+            }
+        }
+        cb.flush(&mut self.ecs); // (4)
+
+        <&mut FieldOfView>::query()
+            .iter_mut(&mut self.ecs)
+            .for_each(|fov| fov.is_dirty = true);
+
+        let mut rng = RandomNumberGenerator::new();
+        let mut map_builder = MapBuilder::new(&mut rng);
+        let mut map_level = 0;
+        <(&mut Player, &mut Point)>::query()
+            .iter_mut(&mut self.ecs)
+            .for_each(|(player, pos)| {
+                player.map_level += 1;
+                map_level = player.map_level;
+                pos.x = map_builder.player_start.x;
+                pos.y = map_builder.player_start.y;
+            });
+        if map_level == 2 {
+            spawn_amulet_of_yala(&mut self.ecs, map_builder.amulet_start);
+        } else {
+            let exit_idx = map_builder.map.point2d_to_index(map_builder.amulet_start);
+            map_builder.map.tiles[exit_idx] = TileType::Exit;
+        }
+        map_builder
+            .monster_spawns
+            .iter()
+            .for_each(|pos| spawn_entity(&mut self.ecs, &mut rng, *pos));
+        self.resources.insert(map_builder.map);
+        self.resources.insert(Camera::new(map_builder.player_start));
+        self.resources.insert(TurnState::AwaitingInput);
+        self.resources.insert(map_builder.theme);
     }
 
     fn game_over(&mut self, ctx: &mut BTerm) {
@@ -93,29 +168,6 @@ impl State {
         }
     }
 
-    fn reset_game_state(&mut self) {
-        self.ecs = World::default();
-        self.resources = Resources::default();
-        let mut rng = RandomNumberGenerator::new();
-        let map_builder = MapBuilder::new(&mut rng);
-
-        spawn_player(&mut self.ecs, map_builder.player_start);
-        spawn_amulet_of_yala(&mut self.ecs, map_builder.amulet_start);
-
-        // spawn a monster in all rooms except for the one the player starts in
-        map_builder
-            .rooms
-            .iter()
-            .skip(1)
-            .map(|r| r.center())
-            .for_each(|pos| spawn_monster(&mut self.ecs, &mut rng, pos));
-
-        self.resources.insert(map_builder.map);
-        self.resources.insert(Camera::new(map_builder.player_start));
-        self.resources.insert(TurnState::AwaitingInput);
-        self.resources.insert(map_builder.theme);
-    }
-
     fn victory(&mut self, ctx: &mut BTerm) {
         ctx.set_active_console(2);
         ctx.print_color_centered(2, GREEN, BLACK, "You have won!");
@@ -132,7 +184,6 @@ impl State {
             "Your town is saved, and you can return to your normal life.",
         );
         ctx.print_color_centered(7, GREEN, BLACK, "Press 1 to play again.");
-
         if let Some(VirtualKeyCode::Key1) = ctx.key {
             self.reset_game_state();
         }
@@ -165,7 +216,12 @@ impl GameState for State {
             TurnState::GameOver => {
                 self.game_over(ctx);
             }
-            TurnState::Victory => self.victory(ctx),
+            TurnState::Victory => {
+                self.victory(ctx);
+            }
+            TurnState::NextLevel => {
+                self.advance_level();
+            }
         }
         render_draw_buffer(ctx).expect("Render error");
     }

@@ -8,7 +8,10 @@ pub struct Render {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Player;
+pub struct Player {
+    // the map level the player is currently on
+    pub map_level: u32,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Enemy;
@@ -40,22 +43,16 @@ pub struct Name(pub String);
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ChasingPlayer;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct Item;
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct AmuletOfYala;
-
 #[derive(Clone, Debug, PartialEq)]
-pub struct FieldOfView{
-    pub visible_tiles : HashSet<Point>,
+pub struct FieldOfView {
+    pub visible_tiles: HashSet<Point>,
     pub radius: i32,
     pub is_dirty: bool,
 }
 
 impl FieldOfView {
     pub fn new(radius: i32) -> Self {
-        Self{
+        Self {
             visible_tiles: HashSet::new(),
             radius,
             is_dirty: true,
@@ -70,3 +67,29 @@ impl FieldOfView {
         }
     }
 }
+
+// Items
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Item;
+
+// Can the entity be carried in inventory?
+#[derive(Clone, PartialEq)]
+pub struct Carried(pub Entity);
+
+// What happens when an item is used?
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ActivateItem {
+    pub used_by: Entity,
+    pub item: Entity,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct AmuletOfYala;
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ProvidesHealing {
+    pub amount: i32,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ProvidesDungeonMap;

@@ -3,6 +3,7 @@ pub enum TurnState {
     AwaitingInput,
     PlayerTurn,
     MonsterTurn,
+    NextLevel,
     GameOver,
     Victory,
 }
