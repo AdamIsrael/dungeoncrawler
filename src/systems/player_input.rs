@@ -7,6 +7,7 @@ use crate::prelude::*;
 #[write_component(Health)]
 #[read_component(Item)]
 #[read_component(Carried)]
+#[read_component(Weapon)]
 pub fn player_input(
     ecs: &mut SubWorld,
     commands: &mut CommandBuffer,
@@ -45,12 +46,24 @@ pub fn player_input(
                     .unwrap();
 
                 let mut items = <(Entity, &Item, &Point)>::query();
+
                 items
                     .iter(ecs)
                     .filter(|(_entity, _item, &item_pos)| item_pos == player_pos)
                     .for_each(|(entity, _item, _item_pos)| {
                         commands.remove_component::<Point>(*entity);
                         commands.add_component(*entity, Carried(player));
+
+                        if let Ok(e) = ecs.entry_ref(*entity) {
+                            if e.get_component::<Weapon>().is_ok() {
+                                <(Entity, &Carried, &Weapon)>::query()
+                                    .iter(ecs)
+                                    .filter(|(_, c, _)| c.0 == player)
+                                    .for_each(|(e, c, w)| {
+                                        commands.remove(*e);
+                                    })
+                            }
+                        }
                     });
                 Point::new(0, 0)
             }
@@ -82,7 +95,7 @@ pub fn player_input(
                 });
 
             if !hit_something {
-                did_something = true;
+                // did_something = true;
                 commands.push((
                     (),
                     WantsToMove {
@@ -93,16 +106,6 @@ pub fn player_input(
             }
         };
 
-        // No action during a turn used to heal 1 hit point. Not anymore, suckers.
-        // if !did_something {
-        //     if let Ok(mut health) = ecs
-        //         .entry_mut(player_entity)
-        //         .unwrap()
-        //         .get_component_mut::<Health>()
-        //     {
-        //         health.current = i32::min(health.max, health.current + 1);
-        //     }
-        // }
         *turn_state = TurnState::PlayerTurn;
     }
 

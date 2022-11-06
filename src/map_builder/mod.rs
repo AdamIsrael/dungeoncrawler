@@ -29,7 +29,7 @@ pub struct MapBuilder {
     pub monster_spawns: Vec<Point>,
     pub player_start: Point,
     pub amulet_start: Point,
-    pub theme : Box<dyn MapTheme>,
+    pub theme: Box<dyn MapTheme>,
 }
 
 impl MapBuilder {
@@ -41,7 +41,7 @@ impl MapBuilder {
             _ => Box::new(CellularAutomataArchitect {}),
         };
         let mut mb = architect.new(rng);
-        
+
         // Apply a prefab structure
         apply_prefab(&mut mb, rng);
 

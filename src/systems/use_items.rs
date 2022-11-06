@@ -1,18 +1,15 @@
 use crate::prelude::*;
 
-#[system] 
-#[read_component(ActivateItem)] 
-#[read_component(ProvidesHealing)] 
-#[write_component(Health)] 
+#[system]
+#[read_component(ActivateItem)]
+#[read_component(ProvidesHealing)]
+#[write_component(Health)]
 #[read_component(ProvidesDungeonMap)]
-pub fn use_items(
-    ecs: &mut SubWorld,
-    commands: &mut CommandBuffer,
-    #[resource] map: &mut Map
-) {
+pub fn use_items(ecs: &mut SubWorld, commands: &mut CommandBuffer, #[resource] map: &mut Map) {
     let mut healing_to_apply = Vec::<(Entity, i32)>::new();
 
-    <(Entity, &ActivateItem)>::query().iter(ecs)
+    <(Entity, &ActivateItem)>::query()
+        .iter(ecs)
         .for_each(|(entity, activate)| {
             let item = ecs.entry_ref(activate.item);
             if let Ok(item) = item {
@@ -26,19 +23,14 @@ pub fn use_items(
             // the item has been consumed
             commands.remove(activate.item);
             commands.remove(*entity);
-        }
-    );
+        });
 
     // apply the healing
     for heal in healing_to_apply.iter() {
         if let Ok(mut target) = ecs.entry_mut(heal.0) {
             if let Ok(health) = target.get_component_mut::<Health>() {
-                health.current = i32::min(
-                    health.max,
-                    health.current+heal.1
-                );
+                health.current = i32::min(health.max, health.current + heal.1);
             }
         }
     }
-
 }
