@@ -1,4 +1,4 @@
-#![warn(clippy::pedantic)]
+// #![warn(clippy::pedantic)]
 
 mod camera;
 mod components;
@@ -75,13 +75,14 @@ impl State {
     }
 
     fn advance_level(&mut self) {
+        use std::collections::HashSet;
+
         let player_entity = *<Entity>::query()
             .filter(component::<Player>())
-            .iter(&mut self.ecs)
-            .nth(0)
+            .iter(&self.ecs)
+            .next()
             .unwrap();
 
-        use std::collections::HashSet;
         let mut entities_to_keep = HashSet::new();
         entities_to_keep.insert(player_entity);
         <(Entity, &Carried)>::query()
@@ -91,7 +92,9 @@ impl State {
             .for_each(|e| {
                 entities_to_keep.insert(e);
             });
-        let mut cb = CommandBuffer::new(&mut self.ecs);
+        
+        let mut cb = CommandBuffer::new(&self.ecs);
+
         for e in Entity::query().iter(&self.ecs) {
             if !entities_to_keep.contains(e) {
                 cb.remove(*e);
@@ -193,7 +196,7 @@ impl GameState for State {
         self.resources.insert(ctx.key);
         ctx.set_active_console(0);
         self.resources.insert(Point::from_tuple(ctx.mouse_pos()));
-        let current_state = self.resources.get::<TurnState>().unwrap().clone();
+        let current_state = *self.resources.get::<TurnState>().unwrap();
         match current_state {
             TurnState::AwaitingInput => self
                 .input_systems

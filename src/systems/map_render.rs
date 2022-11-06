@@ -13,7 +13,7 @@ pub fn map_render(
     let mut fov = <&FieldOfView>::query().filter(component::<Player>());
 
     // locate the player's field of view
-    let player_fov = fov.iter(ecs).nth(0).unwrap();
+    let player_fov = fov.iter(ecs).next().unwrap();
 
     let mut draw_batch = DrawBatch::new();
     draw_batch.target(0);

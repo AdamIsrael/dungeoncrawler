@@ -10,7 +10,8 @@ pub fn chasing(#[resource] map: &Map, ecs: &SubWorld, commands: &mut CommandBuff
     let mut movers = <(Entity, &Point, &ChasingPlayer, &FieldOfView)>::query();
     let mut positions = <(Entity, &Point, &Health)>::query();
     let mut player = <(&Point, &Player)>::query();
-    let player_pos = player.iter(ecs).nth(0).unwrap().0;
+    
+    let player_pos = player.iter(ecs).next().unwrap().0;
     let player_idx = map_idx(player_pos.x, player_pos.y);
 
     let search_targets = vec![player_idx]; // (1)
@@ -24,7 +25,7 @@ pub fn chasing(#[resource] map: &Map, ecs: &SubWorld, commands: &mut CommandBuff
 
     movers.iter(ecs).for_each(|(entity, pos, _, fov)| {
         // don't chase the player if they aren't visible to the monster
-        if !fov.visible_tiles.contains(&player_pos) {
+        if !fov.visible_tiles.contains(player_pos) {
             return;
         }
 

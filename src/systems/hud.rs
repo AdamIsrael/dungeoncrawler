@@ -10,7 +10,7 @@ pub fn hud(ecs: &SubWorld) {
     let mut health_query = <&Health>::query().filter(component::<Player>()); // (1)
     let player_health = health_query
         .iter(ecs)
-        .nth(0) // (2)
+        .next()
         .unwrap();
 
     let mut draw_batch = DrawBatch::new();
@@ -34,9 +34,11 @@ pub fn hud(ecs: &SubWorld) {
     );
 
     // Current level
-    let (player, map_level) = <(Entity, &Player)>::query()
+    let (_player, map_level) = <(Entity, &Player)>::query()
         .iter(ecs)
-        .find_map(|(entity, player)| Some((*entity, player.map_level)))
+        .map(|(entity, player)| Some((*entity, player.map_level)))
+        .next()
+        .unwrap()
         .unwrap();
 
     draw_batch.print_color_right(
@@ -48,7 +50,9 @@ pub fn hud(ecs: &SubWorld) {
     // Inventory
     let player = <(Entity, &Player)>::query()
         .iter(ecs)
-        .find_map(|(entity, _player)| Some(*entity))
+        .map(|(entity, _player)| Some(*entity))
+        .next()
+        .unwrap()
         .unwrap();
 
     let mut item_query = <(&Item, &Name, &Carried)>::query();

@@ -18,7 +18,7 @@ pub struct Template {
     pub base_damage: Option<i32>,
 }
 
-#[derive(Clone, Deserialize, Debug, PartialEq)] // (9)
+#[derive(Clone, Deserialize, Debug, PartialEq, Eq)]
 pub enum EntityType {
     Enemy,
     Item,
@@ -68,8 +68,7 @@ impl Templates {
 
     fn spawn_entity(&self, pt: &Point, template: &Template, commands: &mut CommandBuffer) {
         let entity = commands.push((
-            // (21)
-            pt.clone(), // (22)
+            *pt,
             Render {
                 color: ColorPair::new(WHITE, BLACK),
                 glyph: to_cp437(template.glyph), // (23)

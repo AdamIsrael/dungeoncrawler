@@ -59,15 +59,17 @@ impl MapBuilder {
     }
 
     fn find_most_distant(&self) -> Point {
+        const UNREACHABLE: &f32 = &f32::MAX;
+
         let dijkstra_map = DijkstraMap::new(
             SCREEN_WIDTH,
             SCREEN_HEIGHT,
-            &vec![self.map.point2d_to_index(self.player_start)],
+            // &vec![self.map.point2d_to_index(self.player_start)],
+            &[self.map.point2d_to_index(self.player_start)],
             &self.map,
             1024.0,
         );
 
-        const UNREACHABLE: &f32 = &f32::MAX;
         self.map.index_to_point2d(
             dijkstra_map
                 .map
@@ -164,7 +166,7 @@ impl MapBuilder {
             let target_index = rng
                 .random_slice_index(&spawnable_tiles) // (2)
                 .unwrap();
-            spawns.push(spawnable_tiles[target_index].clone());
+            spawns.push(spawnable_tiles[target_index]);
             spawnable_tiles.remove(target_index); // (3)
         }
         spawns
