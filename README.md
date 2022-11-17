@@ -132,6 +132,7 @@ Items can be worn on:
 - face (eye glasses?)
 - arms (bracers)
 - torso (armor, robe)
+- belt
 - legs (pantaloons?)
 - left hand (weapon, relic, torch, etc)
 - right hand (weapon, relic, torch, etc)
@@ -145,3 +146,17 @@ It would also mean that item _slots_ could be targeted by an attack? Like, a str
 
 
 Items can be worn, carried, or dropped. When an item is dropped, it's placed back on the map.
+
+
+### Misc
+
+- starting money to equip yourself in the first town
+- character gen gives you so many "skill points" for customizing your character
+- gain points for giving your character phobias
+- different kinds of quest, part of the auto-generated world, for each town.
+- doctors to "cure" mental or physical illnesses
+- boats? I've thought about adding rivers. Lakes aren't a stretch. A boat could be used to navigate those tiles.
+- progressive bosses. You might go through a couple towns before you encounter a boss, escallating through bosses, until you reach the final boss of the game
+- appetite - food is the best for restoring health, but you can't eat when full. Hunger!
+- Items can be tagged as Quest
+- Passage of time. What does the character do at night? Sleep at the inn? Restores health/sanity/etc.
