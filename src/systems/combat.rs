@@ -16,6 +16,7 @@ pub fn combat(ecs: &mut SubWorld, commands: &mut CommandBuffer) {
         .map(|(entity, attack)| (*entity, attack.attacker, attack.victim))
         .collect();
 
+    // for every victim, determine if and how much damage is taken
     victims.iter().for_each(|(message, attacker, victim)| {
         let is_player = ecs
             .entry_ref(*victim)
@@ -23,6 +24,7 @@ pub fn combat(ecs: &mut SubWorld, commands: &mut CommandBuffer) {
             .get_component::<Player>()
             .is_ok();
 
+        // Get the base damage
         let base_damage = if let Ok(v) = ecs.entry_ref(*attacker) {
             if let Ok(dmg) = v.get_component::<Damage>() {
                 dmg.0
@@ -31,13 +33,14 @@ pub fn combat(ecs: &mut SubWorld, commands: &mut CommandBuffer) {
             }
         } else {
             0
-        }; // (1)
+        };
 
+        // if the entity is carrying a weapon, calculate its damage
         let weapon_damage: i32 = <(&Carried, &Damage)>::query()
             .iter(ecs)
             .filter(|(carried, _)| carried.0 == *attacker)
             .map(|(_, dmg)| dmg.0)
-            .sum(); // (2)
+            .sum();
 
         let final_damage = base_damage + weapon_damage;
 
@@ -46,8 +49,11 @@ pub fn combat(ecs: &mut SubWorld, commands: &mut CommandBuffer) {
             .unwrap()
             .get_component_mut::<Health>()
         {
+            // Subtract the damage from the victims current health
             health.current -= final_damage;
             if health.current < 1 && !is_player {
+                // If the player falls to 0 hit points or below, remove
+                // them from the map. Game over.
                 commands.remove(*victim);
             }
         }

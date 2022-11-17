@@ -20,12 +20,17 @@ pub fn end_turn(ecs: &SubWorld, #[resource] turn_state: &mut TurnState, #[resour
     let amulet_pos = amulet.iter(ecs).next().unwrap_or(&amulet_default);
 
     player_hp.iter(ecs).for_each(|(hp, pos)| {
+        // if the player has no hit points left, it's game over
         if hp.current < 1 {
             new_state = TurnState::GameOver;
         }
+
+        // If the player has found the amulet, then it's time for a celebration.
         if pos == amulet_pos {
             new_state = TurnState::Victory;
         }
+
+        // If the player is standing on the exit, move to the next level
         let idx = map.point2d_to_index(*pos);
         if map.tiles[idx] == TileType::Exit {
             new_state = TurnState::NextLevel;
